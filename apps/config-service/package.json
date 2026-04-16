@@ -1,10 +1,23 @@
 {
   "name": "@emdzej/config-service",
   "version": "0.1.0",
-  "private": true,
   "description": "Centralised read-only config service with placeholder resolution, env overlay, and JSON Schema validation",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emdzej/config.git",
+    "directory": "apps/config-service"
+  },
+  "keywords": ["config", "configuration", "cloud-native", "spa", "kubernetes"],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "config-service": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Config service entry point.
  *

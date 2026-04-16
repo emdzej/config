@@ -71,6 +71,12 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Publish config-service
+        run: pnpm publish --no-git-checks --provenance --access public
+        working-directory: apps/config-service
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   publish-docker:
     needs: ci
     runs-on: ubuntu-latest
