@@ -49,4 +49,4 @@ Initial release of the `@emdzej/config` monorepo — a minimal, cloud-native run
 - GitHub Actions CI workflow (build, typecheck, test on Node 22 + 24)
 - GitHub Actions publish workflow (npm trusted publishing with provenance on release)
 
-[0.1.0]: https://github.com/emdzej/config/releases/tag/v0.1.0
+[0.1.0]: https://github.com/emdzej/config/releases/tag/0.1.0
