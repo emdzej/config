@@ -1,0 +1,31 @@
+{
+  "name": "@emdzej/config-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Centralised read-only config service with placeholder resolution, env overlay, and JSON Schema validation",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest run",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@emdzej/config-resolver": "workspace:*",
+    "express": "^5.1.0",
+    "pino": "^10.3.1",
+    "pino-pretty": "^13.1.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.2",
+    "@types/node": "^20.11.25",
+    "tsx": "^4.19.0",
+    "typescript": "^5.4.2",
+    "vitest": "^4.1.4"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

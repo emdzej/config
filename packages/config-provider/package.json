@@ -1,0 +1,36 @@
+{
+  "name": "@emdzej/config-provider",
+  "version": "0.1.0",
+  "description": "Spring-style externalized configuration provider with resolver chain, schema validation, and type-safe property access",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/emdzej/config.git",
+    "directory": "packages/config-provider"
+  },
+  "keywords": ["config", "provider", "spring", "externalized", "env", "yaml", "json-schema"],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@emdzej/config-resolver": "workspace:*",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.11.25",
+    "typescript": "^5.4.2",
+    "vitest": "^4.1.4"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

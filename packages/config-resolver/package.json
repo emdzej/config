@@ -1,0 +1,35 @@
+{
+  "name": "@emdzej/config-resolver",
+  "version": "0.1.0",
+  "description": "Spring-style placeholder resolution, env overlay, and JSON Schema validation for config files",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/emdzej/config.git",
+    "directory": "packages/config-resolver"
+  },
+  "keywords": ["config", "placeholder", "spring", "env", "json-schema", "validation"],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.25",
+    "typescript": "^5.4.2",
+    "vitest": "^4.1.4"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

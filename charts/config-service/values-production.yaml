@@ -1,0 +1,103 @@
+# values-production.yaml
+#
+# Production overrides for config-service.
+# Layer this on top of the base values.yaml:
+#
+#   helm install config-service charts/config-service \
+#     -f charts/config-service/values.yaml \
+#     -f charts/config-service/values-production.yaml
+#
+# This example shows how to:
+#   1. Set production env vars (non-sensitive, defined directly)
+#   2. Reference Kubernetes Secrets for sensitive values
+#   3. Use External Secrets Operator to sync secrets from a cloud provider
+
+replicaCount: 2
+
+image:
+  tag: "1.0.0"
+
+# ---------------------------------------------------------------------------
+# Plain env vars — non-sensitive, per-environment values
+# ---------------------------------------------------------------------------
+env:
+  CONFIG_DIR: /app/config
+  SCHEMA_DIR: /app/schemas
+  PORT: "3100"
+  CORS_ORIGIN: "https://app.example.com"
+  STRICT: "true"
+  LOG_LEVEL: warn
+  NODE_ENV: production
+
+  # Application-level values resolved via ${PLACEHOLDER} in config files
+  APP_VERSION: "1.0.0"
+  API_BASE_URL: "https://api.prod.example.com"
+  CORS_ALLOWED_ORIGIN: "https://app.example.com"
+  ENV: production
+
+# ---------------------------------------------------------------------------
+# Secret-sourced env vars — sensitive values pulled from K8s Secrets
+# ---------------------------------------------------------------------------
+# The Secrets themselves are created by the ExternalSecret resources below.
+# The names must match.
+envFromSecret:
+  OIDC_AUTHORITY:
+    secretName: config-service-oidc
+    key: authority
+  OIDC_CLIENT_ID:
+    secretName: config-service-oidc
+    key: client-id
+  DATABASE_URL:
+    secretName: config-service-db
+    key: connection-string
+
+# ---------------------------------------------------------------------------
+# External Secrets — sync from your cloud secret store into K8s Secrets
+# ---------------------------------------------------------------------------
+# Requires: External Secrets Operator (https://external-secrets.io/)
+# and a ClusterSecretStore or SecretStore configured in the cluster.
+#
+# The flow:
+#   Cloud Secret Store (e.g. AWS Secrets Manager)
+#     → ExternalSecret (watches the store)
+#       → Kubernetes Secret (created/refreshed automatically)
+#         → env var in the Pod (via envFromSecret above)
+#           → resolved into config JSON by config-service
+#             → served to the SPA via GET /config/webapp
+externalSecrets:
+  - name: config-service-oidc
+    refreshInterval: 1h
+    secretStoreRef:
+      name: cluster-secret-store
+      kind: ClusterSecretStore
+    data:
+      - secretKey: authority
+        remoteRef:
+          key: /prod/oidc
+          property: authority
+      - secretKey: client-id
+        remoteRef:
+          key: /prod/oidc
+          property: client_id
+
+  - name: config-service-db
+    refreshInterval: 1h
+    secretStoreRef:
+      name: cluster-secret-store
+      kind: ClusterSecretStore
+    data:
+      - secretKey: connection-string
+        remoteRef:
+          key: /prod/database
+          property: connection_string
+
+# ---------------------------------------------------------------------------
+# Resources — adjust for production traffic
+# ---------------------------------------------------------------------------
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

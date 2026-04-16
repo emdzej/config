@@ -1,0 +1,48 @@
+config-service has been deployed.
+
+Get the service URL:
+{{- if eq .Values.service.type "ClusterIP" }}
+  kubectl port-forward svc/{{ include "config-service.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
+{{- end }}
+
+Endpoints:
+  GET  /config/:app     - resolved config for a single app
+  GET  /config           - all configs merged
+  GET  /config?apps=a,b  - selective configs
+  GET  /health           - health + validation status
+  POST /config           - reload configs from disk
+
+Verify:
+  curl http://localhost:{{ .Values.service.port }}/health
+  curl http://localhost:{{ .Values.service.port }}/config/webapp
+  curl http://localhost:{{ .Values.service.port }}/config/api
+
+{{- if .Values.externalSecrets }}
+
+External Secrets:
+  The chart created ExternalSecret resources that sync from your secret store.
+  Verify they are in sync:
+    kubectl get externalsecrets
+{{- end }}
+
+{{- if .Values.envFromSecret }}
+
+Required Secrets:
+  The deployment references these Kubernetes Secrets:
+{{- range $name, $ref := .Values.envFromSecret }}
+    - {{ $ref.secretName }} (key: {{ $ref.key }})
+{{- end }}
+
+{{- if not .Values.externalSecrets }}
+  These must exist before the pods can start. Create them manually:
+
+    kubectl create secret generic config-service-oidc \
+      --from-literal=authority=https://auth.example.com \
+      --from-literal=client-id=webapp-ui
+
+    kubectl create secret generic config-service-db \
+      --from-literal=connection-string=postgresql://user:pass@db:5432/app
+
+  Or use ExternalSecret / Sealed Secrets to manage them declaratively.
+{{- end }}
+{{- end }}

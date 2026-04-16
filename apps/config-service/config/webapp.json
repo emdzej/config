@@ -1,0 +1,25 @@
+{
+  "api": {
+    "basePath": "${API_BASE_URL:http://localhost:8080}/api/v1"
+  },
+  "oidc": {
+    "authority": "${OIDC_AUTHORITY:https://auth.example.com}",
+    "clientId": "${OIDC_CLIENT_ID:webapp-ui}",
+    "scopes": "openid profile email"
+  },
+  "features": {
+    "darkMode": true,
+    "notifications": true,
+    "analytics": false
+  },
+  "labels": {
+    "name": "My App (${ENV:DEV})",
+    "environment": "${ENV:dev}",
+    "version": "${APP_VERSION:0.0.0-local}"
+  },
+  "modules": [
+    { "name": "dashboard", "path": "/dashboard", "enabled": true },
+    { "name": "settings", "path": "/settings", "enabled": true },
+    { "name": "admin", "path": "/admin", "enabled": false }
+  ]
+}

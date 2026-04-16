@@ -1,0 +1,37 @@
+# Docker Compose for config-service
+#
+# Usage:
+#   docker compose up --build
+#
+# Mount your own config and schema files by editing the volume paths below,
+# or override them at runtime:
+#
+#   CONFIG_PATH=./my-configs SCHEMA_PATH=./my-schemas docker compose up --build
+
+services:
+  config-service:
+    build:
+      context: .
+      dockerfile: apps/config-service/Dockerfile
+    ports:
+      - "${PORT:-3100}:3100"
+    environment:
+      - CONFIG_DIR=/app/config
+      - SCHEMA_DIR=/app/schemas
+      - PORT=3100
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - STRICT=${STRICT:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - NODE_ENV=${NODE_ENV:-production}
+    volumes:
+      # Config files — mount a local directory containing your *.json configs
+      - ${CONFIG_PATH:-./apps/config-service/config}:/app/config:ro
+      # Schema files — mount a local directory containing your *.schema.json files
+      - ${SCHEMA_PATH:-./schemas}:/app/schemas:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3100/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

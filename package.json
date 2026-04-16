@@ -1,0 +1,18 @@
+{
+  "name": "@emdzej/config",
+  "private": true,
+  "description": "Centralised runtime configuration service with Spring-style placeholder resolution",
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "build": "turbo build",
+    "test": "turbo test",
+    "check-types": "turbo check-types",
+    "dev": "turbo dev"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

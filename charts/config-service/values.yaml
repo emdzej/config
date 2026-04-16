@@ -1,0 +1,256 @@
+# -- Override the chart name
+nameOverride: ""
+# -- Override the full release name
+fullnameOverride: ""
+
+# -- Number of replicas
+replicaCount: 1
+
+image:
+  repository: ghcr.io/emdzej/config-service
+  tag: ""  # defaults to Chart.appVersion
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# ---------------------------------------------------------------------------
+# Service environment variables
+# ---------------------------------------------------------------------------
+# The config-service resolves ${PLACEHOLDER} syntax in config JSON files from
+# these env vars at runtime. This is the core of the "build once, run
+# everywhere" approach — the same container image is deployed to every
+# environment; only these values change.
+#
+# Two sources for env vars:
+#   1. env:            — plain values, set directly in the Deployment manifest
+#   2. envFromSecret:  — values pulled from Kubernetes Secrets (created
+#                        manually, by ExternalSecret, or by Sealed Secrets)
+
+env:
+  # ---- Service-level settings ----
+  CONFIG_DIR: /app/config
+  SCHEMA_DIR: /app/schemas
+  PORT: "3100"
+  CORS_ORIGIN: "*"
+  STRICT: "true"
+  LOG_LEVEL: info
+  NODE_ENV: production
+
+  # ---- Application-level env vars (placeholder resolution) ----
+  # Non-sensitive values defined directly. These get resolved inside the
+  # config JSON files via ${PLACEHOLDER} or ${PLACEHOLDER:default} syntax.
+  APP_VERSION: "2.1.0"
+  API_BASE_URL: "https://api.example.com"
+  CORS_ALLOWED_ORIGIN: "https://app.example.com"
+  ENV: production
+
+# -- Env vars sourced from Kubernetes Secrets.
+# Each entry creates an env var using valueFrom.secretKeyRef.
+# The referenced Secrets can be created manually, by ExternalSecret (below),
+# or by any other secrets workflow (Sealed Secrets, SOPS, etc.).
+envFromSecret:
+  # OIDC provider URL — typically per-environment, often considered sensitive
+  OIDC_AUTHORITY:
+    secretName: config-service-oidc
+    key: authority
+  # OIDC client ID
+  OIDC_CLIENT_ID:
+    secretName: config-service-oidc
+    key: client-id
+  # Database connection string — contains credentials
+  DATABASE_URL:
+    secretName: config-service-db
+    key: connection-string
+
+# ---------------------------------------------------------------------------
+# External Secrets (optional — requires external-secrets.io operator)
+# ---------------------------------------------------------------------------
+# When set, the chart creates ExternalSecret resources that sync secrets from
+# an external store (AWS Secrets Manager, Azure Key Vault, GCP Secret Manager,
+# HashiCorp Vault, etc.) into Kubernetes Secrets automatically.
+#
+# This replaces manual `kubectl create secret` commands and ensures secrets
+# exist only at runtime — never in the repository.
+#
+# Set to [] (empty) to skip creating ExternalSecret resources.
+externalSecrets: []
+  # Example — uncomment and adapt to your secret store:
+  #
+  # - name: config-service-oidc
+  #   refreshInterval: 1h
+  #   secretStoreRef:
+  #     name: cluster-secret-store    # your ClusterSecretStore name
+  #     kind: ClusterSecretStore
+  #   data:
+  #     - secretKey: authority
+  #       remoteRef:
+  #         key: /prod/oidc            # path in your secret store
+  #         property: authority
+  #     - secretKey: client-id
+  #       remoteRef:
+  #         key: /prod/oidc
+  #         property: client_id
+  #
+  # - name: config-service-db
+  #   refreshInterval: 1h
+  #   secretStoreRef:
+  #     name: cluster-secret-store
+  #     kind: ClusterSecretStore
+  #   data:
+  #     - secretKey: connection-string
+  #       remoteRef:
+  #         key: /prod/database
+  #         property: connection_string
+
+# ---------------------------------------------------------------------------
+# Config files — mounted into CONFIG_DIR as a ConfigMap volume
+# ---------------------------------------------------------------------------
+# Each key becomes a file: webapp.json, api.json, etc.
+# The web application fetches its config from /config/<appname> at startup.
+#
+# Values use ${PLACEHOLDER:default} syntax. Defaults provide safe local-dev
+# fallbacks — the "build once, run everywhere" principle means the actual
+# values are injected via env vars per environment.
+configFiles:
+  webapp.json: |
+    {
+      "api": {
+        "basePath": "${API_BASE_URL:http://localhost:8080}/api/v1"
+      },
+      "oidc": {
+        "authority": "${OIDC_AUTHORITY:https://auth.example.com}",
+        "clientId": "${OIDC_CLIENT_ID:webapp-ui}",
+        "scopes": "openid profile email"
+      },
+      "features": {
+        "darkMode": true,
+        "notifications": true,
+        "analytics": false
+      },
+      "labels": {
+        "name": "My App (${ENV:DEV})",
+        "environment": "${ENV:dev}",
+        "version": "${APP_VERSION:0.0.0-local}"
+      },
+      "modules": [
+        { "name": "dashboard", "path": "/dashboard", "enabled": true },
+        { "name": "settings", "path": "/settings", "enabled": true },
+        { "name": "admin", "path": "/admin", "enabled": false }
+      ]
+    }
+
+  api.json: |
+    {
+      "name": "API Gateway",
+      "host": "0.0.0.0",
+      "port": 8080,
+      "cors": {
+        "origin": "${CORS_ALLOWED_ORIGIN:*}",
+        "credentials": true
+      },
+      "auth": {
+        "issuer": "${webapp.oidc.authority}",
+        "audience": "api-gateway"
+      },
+      "database": {
+        "connectionString": "${DATABASE_URL:postgresql://localhost:5432/app}"
+      },
+      "rateLimit": {
+        "windowMs": 60000,
+        "max": 100
+      },
+      "logging": {
+        "level": "${LOG_LEVEL:info}",
+        "format": "json"
+      }
+    }
+
+# ---------------------------------------------------------------------------
+# Schema files — mounted into SCHEMA_DIR as a ConfigMap volume (optional)
+# ---------------------------------------------------------------------------
+# Each key must follow the <app>.schema.json naming convention.
+# Set to {} to skip schema validation entirely.
+schemaFiles:
+  webapp.schema.json: |
+    {
+      "type": "object",
+      "required": ["oidc", "api", "labels"],
+      "properties": {
+        "oidc": {
+          "type": "object",
+          "required": ["authority", "clientId"],
+          "properties": {
+            "authority": { "type": "string", "format": "uri" },
+            "clientId": { "type": "string" },
+            "scopes": { "type": "string" }
+          }
+        },
+        "api": {
+          "type": "object",
+          "required": ["basePath"],
+          "properties": {
+            "basePath": { "type": "string" }
+          }
+        },
+        "labels": {
+          "type": "object",
+          "required": ["name", "environment"],
+          "properties": {
+            "name": { "type": "string" },
+            "environment": { "type": "string" }
+          }
+        }
+      }
+    }
+
+# ---------------------------------------------------------------------------
+# Service & networking
+# ---------------------------------------------------------------------------
+service:
+  type: ClusterIP
+  port: 3100
+
+# ---------------------------------------------------------------------------
+# Probes
+# ---------------------------------------------------------------------------
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 15
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 3
+  periodSeconds: 10
+  failureThreshold: 2
+
+# ---------------------------------------------------------------------------
+# Resources
+# ---------------------------------------------------------------------------
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+# ---------------------------------------------------------------------------
+# Pod-level settings
+# ---------------------------------------------------------------------------
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+podAnnotations: {}
+podLabels: {}
+
+serviceAccount:
+  create: false
+  name: ""
+  annotations: {}
