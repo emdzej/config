@@ -1,6 +1,6 @@
 # @emdzej/config
 
-A minimal, cloud-native **runtime configuration service** for web applications.
+A minimal, cloud-native **runtime configuration service** for web applications with no backend part.
 
 ## Why This Exists
 
