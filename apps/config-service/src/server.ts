@@ -12,11 +12,18 @@
 import express, { type Express, type Request, type Response } from "express";
 import { loadConfigs, type LoaderState, type LoaderOptions } from "./loader";
 import { logger } from "./logger";
+import {
+  createAuthMiddleware,
+  authOptionsFromEnv,
+  type AuthOptions,
+} from "./auth";
 
 export type ServerOptions = LoaderOptions & {
   port: number;
   /** Optional CORS origin. Set to "*" to allow all. */
   corsOrigin?: string;
+  /** Authentication options for POST /config. Defaults to env-based detection. */
+  auth?: AuthOptions;
 };
 
 export function createServer(options: ServerOptions): Express {
@@ -166,9 +173,11 @@ export function createServer(options: ServerOptions): Express {
   });
 
   /**
-   * POST /config - reload configs from disk
+   * POST /config - reload configs from disk (auth-protected)
    */
-  app.post("/config", (_req: Request, res: Response) => {
+  const authMiddleware = createAuthMiddleware(options.auth ?? authOptionsFromEnv());
+
+  app.post("/config", authMiddleware, (_req: Request, res: Response) => {
     logger.info("Reloading configs...");
     state = loadConfigs(options);
     const appNames = [...state.apps.keys()];

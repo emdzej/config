@@ -23,6 +23,12 @@ services:
       - STRICT=${STRICT:-true}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - NODE_ENV=${NODE_ENV:-production}
+      # Auth — uncomment one of the modes below to protect POST /config:
+      # JWT mode (OIDC):
+      # - AUTH_ISSUER=${AUTH_ISSUER}
+      # - AUTH_SCOPE=${AUTH_SCOPE:-cfg}
+      # Secret mode:
+      # - AUTH_SECRET=${AUTH_SECRET}
     volumes:
       # Config files — mount a local directory containing your *.json configs
       - ${CONFIG_PATH:-./apps/config-service/config}:/app/config:ro

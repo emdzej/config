@@ -217,7 +217,7 @@ The app name is derived from the filename: `webapp.json` becomes `webapp`.
 | `GET`  | `/config`          | All configs as `{ appName: config, ... }` |
 | `GET`  | `/config?apps=a,b` | Selective merge — only listed apps        |
 | `GET`  | `/health`          | Health check with validation status       |
-| `POST` | `/config`          | Reload configs from disk                  |
+| `POST` | `/config`          | Reload configs from disk (auth-protected) |
 
 #### `GET /config/:app`
 
@@ -267,6 +267,27 @@ Returns `200` when all configs are healthy, `503` otherwise.
 
 Reloads all configs from disk. Useful for hot-reloading after a ConfigMap change in Kubernetes.
 
+This endpoint is **auth-protected** when authentication is configured (see below).
+
+### Authentication
+
+The `POST /config` (reload) endpoint can be protected with one of two authentication modes. `GET` endpoints are always public.
+
+| Env Var        | Effect                                                                 |
+| -------------- | ---------------------------------------------------------------------- |
+| `AUTH_ISSUER`  | Enables **JWT mode** — validates `Authorization: Bearer <token>` using OIDC discovery |
+| `AUTH_SECRET`  | Enables **secret mode** — validates `Authorization: <secret>` (raw value) |
+| `AUTH_SCOPE`   | Required JWT scope claim (default: `cfg`)                              |
+
+**Detection logic:**
+- If `AUTH_ISSUER` is set → JWT mode (takes priority even if `AUTH_SECRET` is also set)
+- If only `AUTH_SECRET` is set → shared secret mode
+- If neither is set → no authentication (open access)
+
+**JWT mode** discovers the JWKS endpoint automatically via `AUTH_ISSUER/.well-known/openid-configuration`, validates the token signature, expiry, and issuer, then checks that the `scope` claim contains the required scope (`cfg` by default, configurable via `AUTH_SCOPE`).
+
+**Secret mode** compares the `Authorization` header value directly against `AUTH_SECRET`.
+
 ### Environment Variables
 
 | Variable      | Default     | Description                                                   |
@@ -276,6 +297,9 @@ Reloads all configs from disk. Useful for hot-reloading after a ConfigMap change
 | `PORT`        | `3100`      | HTTP port                                                     |
 | `CORS_ORIGIN` | `*`         | CORS origin (`""` to disable)                                 |
 | `STRICT`      | `true`      | Fail on unresolved placeholders (`false` to leave them as-is) |
+| `AUTH_ISSUER` | —           | OIDC issuer URL — enables JWT auth on `POST /config`          |
+| `AUTH_SECRET` | —           | Shared secret — enables secret auth on `POST /config`         |
+| `AUTH_SCOPE`  | `cfg`       | Required JWT scope (only used in JWT mode)                    |
 | `LOG_LEVEL`   | `info`      | Pino log level (trace, debug, info, warn, error, fatal)       |
 | `NODE_ENV`    | —           | `production` for JSON logs, anything else for pretty-print    |
 

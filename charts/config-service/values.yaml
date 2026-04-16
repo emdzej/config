@@ -36,6 +36,16 @@ env:
   LOG_LEVEL: info
   NODE_ENV: production
 
+  # ---- Authentication for POST /config ----
+  # Uncomment one mode to protect the reload endpoint:
+  #
+  # JWT mode (OIDC) — discovers JWKS from issuer's .well-known/openid-configuration:
+  # AUTH_ISSUER: "https://auth.example.com"
+  # AUTH_SCOPE: "cfg"          # required scope claim (default: cfg)
+  #
+  # Secret mode — raw secret compared against Authorization header:
+  # AUTH_SECRET: "change-me"   # prefer using envFromSecret for this
+
   # ---- Application-level env vars (placeholder resolution) ----
   # Non-sensitive values defined directly. These get resolved inside the
   # config JSON files via ${PLACEHOLDER} or ${PLACEHOLDER:default} syntax.

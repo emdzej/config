@@ -37,8 +37,9 @@ Initial release of the `@emdzej/config` monorepo — a minimal, cloud-native run
 - Selective multi-app merge via `GET /config?apps=a,b`
 - Health endpoint (`GET /health`) with per-app validation status
 - Hot reload endpoint (`POST /config`)
+- **Authentication for `POST /config`**: shared secret mode (`AUTH_SECRET`) or JWT/OIDC mode (`AUTH_ISSUER`) with JWKS auto-discovery and scope validation (`AUTH_SCOPE`, default `cfg`)
 - Structured logging with pino (JSON in production, pretty-print in development)
-- Configurable via `CONFIG_DIR`, `SCHEMA_DIR`, `PORT`, `CORS_ORIGIN`, `STRICT`, `LOG_LEVEL`
+- Configurable via `CONFIG_DIR`, `SCHEMA_DIR`, `PORT`, `CORS_ORIGIN`, `STRICT`, `AUTH_ISSUER`, `AUTH_SECRET`, `AUTH_SCOPE`, `LOG_LEVEL`
 
 ### Infrastructure
 

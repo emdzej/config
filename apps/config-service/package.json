@@ -15,6 +15,7 @@
   "dependencies": {
     "@emdzej/config-resolver": "workspace:*",
     "express": "^5.1.0",
+    "jose": "^6.2.2",
     "pino": "^10.3.1",
     "pino-pretty": "^13.1.3"
   },

@@ -7,6 +7,9 @@
  *   PORT         - HTTP port (default: 3100)
  *   CORS_ORIGIN  - CORS origin (default: *, set to "" to disable)
  *   STRICT       - fail on unresolved placeholders (default: true)
+ *   AUTH_ISSUER  - OpenID Connect issuer URL — enables JWT auth on POST /config
+ *   AUTH_SECRET  - shared secret — enables secret auth on POST /config (if AUTH_ISSUER not set)
+ *   AUTH_SCOPE   - required JWT scope (default: "cfg")
  */
 
 import { createServer } from "./server";
